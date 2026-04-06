@@ -1,0 +1,44 @@
+# cc-gateway 配置文件示例
+# 复制此文件为 config.yaml 并填入你的 API Keys
+
+# 服务商配置
+providers:
+  # Minimax
+  - id: minimax
+    baseURL: https://api.minimax.chat/v1
+    apiKey: YOUR_MINIMAX_API_KEY
+    openAICompatible: true
+
+  # GLM (智谱)
+  - id: glm
+    baseURL: https://open.bigmodel.cn/api/paas/v4
+    apiKey: YOUR_GLM_API_KEY
+    openAICompatible: true
+
+  # 你可以添加更多服务商
+  # - id: openai
+  #   baseURL: https://api.openai.com/v1
+  #   apiKey: YOUR_OPENAI_API_KEY
+  #   openAICompatible: true
+
+# 模型路由配置
+# 格式: "逻辑模型名": "providerId/实际模型名"
+routes:
+  # 示例：请求 glm-5-turbo 时，实际调用 GLM 的 glm-5-turbo 模型
+  glm-5-turbo: glm/glm-5-turbo
+
+  # 示例：请求 haiku 时，实际调用 Minimax 的 minimax-2.7 模型
+  haiku: minimax/minimax-2.7
+
+  # 示例：请求 sonnet 时，也调用 Minimax
+  sonnet: minimax/minimax-2.7
+
+  # 你可以添加更多路由
+  # gpt-4: openai/gpt-4
+  # gpt-3.5-turbo: openai/gpt-3.5-turbo
+
+# 服务器配置
+port: 1314
+
+# 日志级别: debug | info | warn | error
+logLevel: info

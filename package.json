@@ -1,0 +1,55 @@
+{
+  "name": "cc-gateway",
+  "version": "2.0.0",
+  "description": "本地模型路由网关桌面应用 - 通过 UI 配置 OpenAI-compatible 服务商和模型路由",
+  "main": "dist-electron/main/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc -p tsconfig.electron.json",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.electron.json",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\" \"electron/**/*.ts\" \"electron-proxy/**/*.ts\" \"shared/**/*.ts\"",
+    "electron:dev": "vite",
+    "electron:build": "vite build && electron-builder",
+    "electron:preview": "vite build && electron ."
+  },
+  "keywords": [
+    "llm",
+    "gateway",
+    "proxy",
+    "openai",
+    "claude",
+    "electron"
+  ],
+  "author": "xuhaochen",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "electron-store": "^10.0.0",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.10.7",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.19.1",
+    "@typescript-eslint/parser": "^8.19.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
+    "eslint": "^9.17.0",
+    "postcss": "^8.4.49",
+    "prettier": "^3.4.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vite-plugin-electron": "^0.28.8"
+  }
+}

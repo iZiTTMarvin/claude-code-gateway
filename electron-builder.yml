@@ -1,0 +1,14 @@
+appId: com.xuhaochen.cc-gateway
+productName: cc-gateway
+directories:
+  output: release
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - "!node_modules"
+win:
+  target: nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+asar: true

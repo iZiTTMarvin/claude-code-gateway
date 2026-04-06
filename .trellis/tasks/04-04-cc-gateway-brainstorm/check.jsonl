@@ -1,0 +1,10 @@
+{"file": ".agents/skills/finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/check-backend/SKILL.md", "reason": "Backend check spec"}
+{"file": ".agents/skills/check-frontend/SKILL.md", "reason": "Frontend check spec"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "验证错误处理是否符合规范"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "验证组件是否符合规范"}
+{"file": ".trellis/tasks/04-04-cc-gateway-brainstorm/engineering-plan.md", "reason": "Check implementation against approved engineering plan"}
+{"file": ".trellis/tasks/04-04-cc-gateway-brainstorm/test-plan.md", "reason": "Check coverage against planned tests"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Check cross-layer contracts and boundary handling"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "Check logging and sensitive-data handling"}
+{"file": "shared/types.ts", "reason": "Check schema changes stay explicit and type-safe"}

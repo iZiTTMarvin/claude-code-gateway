@@ -1,0 +1,73 @@
+{
+  "id": "cc-gateway-brainstorm",
+  "name": "cc-gateway-brainstorm",
+  "title": "cc-gateway Claude Code local gateway desktop app",
+  "description": "Refactor cc-gateway into a Claude Code focused local Anthropic-compatible desktop gateway with provider discovery and slot mapping.",
+  "status": "in_progress",
+  "dev_type": "fullstack",
+  "scope": "gateway",
+  "priority": "P2",
+  "creator": "xuhaochen",
+  "assignee": "xuhaochen",
+  "createdAt": "2026-04-04",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "current_phase": 3,
+  "next_action": [
+    {
+      "phase": 1,
+      "action": "implement"
+    },
+    {
+      "phase": 2,
+      "action": "check"
+    },
+    {
+      "phase": 3,
+      "action": "finish"
+    },
+    {
+      "phase": 4,
+      "action": "create-pr"
+    }
+  ],
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "shared/types.ts",
+    "electron/main/config-store.ts",
+    "electron/main/desktop-runtime.ts",
+    "electron/main/provider-discovery.ts",
+    "electron/main/ipc-handlers.ts",
+    "electron/main/proxy-manager.ts",
+    "electron/preload/index.ts",
+    "electron-proxy/server.ts",
+    "electron-proxy/router.ts",
+    "src/App.tsx",
+    "src/hooks/useAppSettings.ts",
+    "src/components/ProviderCard.tsx",
+    "src/components/ModelDiscoveryCard.tsx",
+    "src/components/SlotMappingCard.tsx",
+    "src/components/GatewayStatusCard.tsx",
+    ".trellis/tasks/04-04-cc-gateway-brainstorm/prd.md",
+    ".trellis/tasks/04-04-cc-gateway-brainstorm/engineering-plan.md"
+  ],
+  "notes": "Approved design doc merged into Trellis task flow. Core implementation and check pass completed on 2026-04-07. Historical task path remains brainstorm, but scope is now the Claude Code local gateway product. Awaiting human validation and finish-work/record-session.",
+  "meta": {
+    "design_doc": "C:\\Users\\xuhaochen\\.gstack\\projects\\cc-gateway\\xuhaochen-main-design-20260406-233709.md",
+    "research_doc": ".trellis/tasks/04-04-cc-gateway-brainstorm/research.md",
+    "engineering_plan": ".trellis/tasks/04-04-cc-gateway-brainstorm/engineering-plan.md",
+    "test_plan": ".trellis/tasks/04-04-cc-gateway-brainstorm/test-plan.md",
+    "approved_at": "2026-04-06",
+    "assumptions": [
+      "Keep cc-switch as an external helper in wave 1.",
+      "Treat provider model discovery as best-effort with manual fallback.",
+      "Prioritize Anthropic-compatible /v1/messages over generic provider breadth."
+    ]
+  }
+}

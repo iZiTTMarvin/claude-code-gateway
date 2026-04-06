@@ -3,6 +3,8 @@ node_modules/
 
 # Build output
 dist/
+dist-electron/
+dist-test/
 
 # Environment & Config
 .env
@@ -24,3 +26,8 @@ Thumbs.db
 
 # Testing
 coverage/
+
+.agents
+.claude
+.kilo
+.kilocode
