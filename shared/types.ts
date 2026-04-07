@@ -5,8 +5,6 @@
 export type ProviderProtocol = 'anthropic' | 'openai';
 
 export type ModelDiscoveryStatus = 'idle' | 'syncing' | 'success' | 'failed';
-export type SlotKind = 'main' | 'thinking' | 'opus' | 'sonnet' | 'haiku';
-export type SlotMappingSource = 'discovered' | 'custom';
 
 export interface DiscoveredModel {
   /** 上游模型 ID */
@@ -48,16 +46,6 @@ export interface GatewayAuthConfig {
   readonly apiKey: string;
 }
 
-export interface SlotMapping {
-  readonly id: string;
-  readonly slot: SlotKind;
-  /** 目标 provider */
-  readonly providerId: string;
-  readonly source: SlotMappingSource;
-  /** 具体模型 ID（可来自发现列表，也可自定义输入） */
-  readonly modelId: string;
-}
-
 export interface AppSettings {
   readonly port: number;
   readonly minimizeToTrayOnClose: boolean;
@@ -87,7 +75,7 @@ export interface RouteMapping {
 
 export interface AppConfig {
   readonly providers: readonly Provider[];
-  readonly slotMappings: readonly SlotMapping[];
+
   readonly appSettings: AppSettings;
   readonly gatewayAuth: GatewayAuthConfig;
   /**
@@ -95,7 +83,7 @@ export interface AppConfig {
    */
   readonly port: number;
   /**
-   * @deprecated 兼容旧代码路径。新代码应使用 slotMappings。
+   * @deprecated 兼容旧代码路径。新代码应使用直接模型名路由。
    */
   readonly routes: readonly RouteMapping[];
 }

@@ -14,8 +14,7 @@ import { useAppSettings } from './hooks/useAppSettings';
 import { useGatewayAuth } from './hooks/useGatewayAuth';
 import { useProxyStatus } from './hooks/useProxyStatus';
 import { useProviders } from './hooks/useProviders';
-import { useSlotMappings } from './hooks/useSlotMappings';
-import { SlotMappingCard } from './components/SlotMappingCard';
+
 import * as ipc from './lib/ipc';
 
 export function App() {
@@ -31,16 +30,9 @@ export function App() {
   }, []);
 
   const providerState = useProviders(config, setConfig);
-  const slotState = useSlotMappings(config, setConfig);
+
   const appSettingsState = useAppSettings(config, setConfig);
   const gatewayAuthState = useGatewayAuth(config, setConfig);
-
-  const discoveredModelsByProvider = Object.fromEntries(
-    Object.entries(providerState.discoveryStateByProvider).map(([providerId, discovery]) => [
-      providerId,
-      discovery.models.map(model => model.id),
-    ]),
-  );
 
   if (error) {
     return (
@@ -93,15 +85,6 @@ export function App() {
 
         {/* 右栏：运行区 */}
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
-          <SlotMappingCard
-            providers={providerState.providers}
-            slotMappings={slotState.slotMappings}
-            discoveredModelsByProvider={discoveredModelsByProvider}
-            savingSlot={slotState.savingSlot}
-            onSaveSlot={slotState.saveSlotMapping}
-            onClearSlot={slotState.clearSlotMapping}
-          />
-
           <GatewayStatusCard
             status={proxy.status}
             appSettings={appSettingsState.appSettings}
@@ -118,11 +101,7 @@ export function App() {
         </div>
       </div>
 
-      <StatusBar
-        status={proxy.status}
-        providerCount={config.providers.length}
-        slotMappedCount={slotState.mappedCount}
-      />
+      <StatusBar status={proxy.status} providerCount={config.providers.length} />
     </div>
   );
 }

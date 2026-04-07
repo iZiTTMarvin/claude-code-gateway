@@ -15,4 +15,9 @@ Use `@/.trellis/` to learn:
 
 Keep this managed block so 'trellis update' can refresh the instructions.
 
+Project note:
+- Claude Code slot mapping functionality has been removed from the product UI and routing path.
+- Model selection is now user-defined through cc-switch and direct model IDs.
+- Keep legacy compatibility code only when required for reading existing configs; do not add new slot-mapping logic.
+
 <!-- TRELLIS:END -->

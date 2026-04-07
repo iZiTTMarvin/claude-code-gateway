@@ -1,6 +1,6 @@
 /**
  * electron-store 配置管理
- * 持久化存储 providers、slotMappings、appSettings 等配置
+ * 持久化存储 providers、appSettings 等配置
  */
 
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -13,8 +13,6 @@ import type {
   ProviderDiscoveryState,
   ProviderProtocol,
   RouteMapping,
-  SlotKind,
-  SlotMapping,
 } from '../../shared/types';
 
 const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -30,17 +28,15 @@ const DEFAULT_GATEWAY_AUTH: GatewayAuthConfig = {
 
 const DEFAULT_CONFIG: AppConfig = {
   providers: [],
-  slotMappings: [],
   appSettings: DEFAULT_APP_SETTINGS,
   gatewayAuth: DEFAULT_GATEWAY_AUTH,
-  // 兼容字段：新代码请使用 appSettings.port / slotMappings
+  // 兼容字段：新代码请使用 appSettings.port
   port: DEFAULT_APP_SETTINGS.port,
   routes: [],
 };
 
 interface StoreSchema {
   providers: readonly ProviderConfig[];
-  slotMappings: readonly SlotMapping[];
   appSettings: AppSettings;
   gatewayAuth: GatewayAuthConfig;
   // deprecated compatibility fields
@@ -64,14 +60,6 @@ interface LegacyDiscoveredModel {
   readonly raw?: Readonly<Record<string, unknown>>;
 }
 
-interface LegacySlotMapping {
-  readonly id?: string;
-  readonly slot?: string;
-  readonly providerId?: string;
-  readonly source?: 'discovered' | 'custom';
-  readonly modelId?: string;
-}
-
 interface ConfigStore {
   readonly path: string;
   get<Key extends keyof StoreSchema>(key: Key): StoreSchema[Key];
@@ -89,7 +77,6 @@ async function initStore(): Promise<void> {
     defaults: {
       // StoreSchema 内部保持 ProviderConfig（discovery 必填）
       providers: [],
-      slotMappings: DEFAULT_CONFIG.slotMappings,
       appSettings: DEFAULT_CONFIG.appSettings,
       gatewayAuth: DEFAULT_CONFIG.gatewayAuth,
       routes: DEFAULT_CONFIG.routes,
@@ -107,38 +94,6 @@ function requireStore(): ConfigStore {
 
 function isValidPort(port: number | undefined): port is number {
   return typeof port === 'number' && Number.isInteger(port) && port >= 1 && port <= 65535;
-}
-
-function normalizeSlotKind(value: string | undefined): SlotKind | null {
-  if (!value) return null;
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'main') return 'main';
-  if (normalized === 'thinking') return 'thinking';
-  if (normalized === 'opus') return 'opus';
-  if (normalized === 'sonnet') return 'sonnet';
-  if (normalized === 'haiku') return 'haiku';
-  return null;
-}
-
-function slotFromLogicalModel(logicalModel: string): SlotKind | null {
-  const value = logicalModel.trim().toLowerCase();
-
-  if (value === 'main' || value === 'default' || value === 'primary') {
-    return 'main';
-  }
-  if (value === 'thinking' || value === 'reasoning' || value === 'think') {
-    return 'thinking';
-  }
-  if (value === 'opus' || value.includes('opus')) {
-    return 'opus';
-  }
-  if (value === 'sonnet' || value.includes('sonnet')) {
-    return 'sonnet';
-  }
-  if (value === 'haiku' || value.includes('haiku')) {
-    return 'haiku';
-  }
-  return null;
 }
 
 function normalizeGatewayAuth(auth: Partial<GatewayAuthConfig> | undefined): GatewayAuthConfig {
@@ -248,48 +203,6 @@ function normalizeRoute(route: RouteMapping): RouteMapping {
   };
 }
 
-function normalizeSlotMappings(mappings: readonly LegacySlotMapping[]): readonly SlotMapping[] {
-  return mappings
-    .map(mapping => {
-      const slot = normalizeSlotKind(mapping.slot);
-      const providerId = mapping.providerId?.trim();
-      const modelId = mapping.modelId?.trim();
-      if (!slot || !providerId || !modelId) {
-        return null;
-      }
-      return {
-        id: mapping.id || randomUUID(),
-        slot,
-        providerId,
-        source: mapping.source === 'discovered' ? 'discovered' : 'custom',
-        modelId,
-      } satisfies SlotMapping;
-    })
-    .filter((mapping): mapping is SlotMapping => mapping !== null);
-}
-
-function migrateRoutesToSlotMappings(routes: readonly RouteMapping[]): readonly SlotMapping[] {
-  const bySlot = new Map<SlotKind, SlotMapping>();
-
-  for (const route of routes) {
-    const slot = slotFromLogicalModel(route.logicalModel);
-    const providerId = route.providerId.trim();
-    const modelId = route.actualModel.trim();
-    if (!slot || !providerId || !modelId) {
-      continue;
-    }
-    bySlot.set(slot, {
-      id: route.id || randomUUID(),
-      slot,
-      providerId,
-      source: 'custom',
-      modelId,
-    });
-  }
-
-  return Array.from(bySlot.values());
-}
-
 export function generateGatewayApiKey(): string {
   return `ccg_${randomBytes(24).toString('base64url')}`;
 }
@@ -309,22 +222,13 @@ export async function getConfig(): Promise<AppConfig> {
     currentStore.get('gatewayAuth') as Partial<GatewayAuthConfig> | undefined
   );
 
-  let slotMappings = normalizeSlotMappings(currentStore.get('slotMappings') as LegacySlotMapping[]);
-  if (slotMappings.length === 0 && routes.length > 0) {
-    // 兼容旧配置：首次读取时把 routes 映射到 slotMappings
-    slotMappings = migrateRoutesToSlotMappings(routes);
-    if (slotMappings.length > 0) {
-      currentStore.set('slotMappings', slotMappings);
-    }
-  }
-
   if (currentStore.get('port') !== appSettings.port) {
     currentStore.set('port', appSettings.port);
   }
 
   return {
     providers,
-    slotMappings,
+
     appSettings,
     gatewayAuth,
     // 兼容字段
@@ -349,18 +253,6 @@ export async function saveConfig(partial: Partial<AppConfig>): Promise<AppConfig
       ? partial.routes.map(route => normalizeRoute(route))
       : existing.routes;
 
-  let slotMappings =
-    partial.slotMappings !== undefined
-      ? normalizeSlotMappings(partial.slotMappings as readonly LegacySlotMapping[])
-      : existing.slotMappings;
-
-  if (partial.slotMappings === undefined && partial.routes !== undefined) {
-    const migrated = migrateRoutesToSlotMappings(routes);
-    if (migrated.length > 0) {
-      slotMappings = migrated;
-    }
-  }
-
   const appSettings = normalizeAppSettings(
     partial.appSettings ?? existing.appSettings,
     partial.port ?? existing.port
@@ -373,7 +265,6 @@ export async function saveConfig(partial: Partial<AppConfig>): Promise<AppConfig
 
   currentStore.set('providers', providers);
   currentStore.set('routes', routes);
-  currentStore.set('slotMappings', slotMappings);
   currentStore.set('appSettings', appSettings);
   currentStore.set('gatewayAuth', gatewayAuth);
   currentStore.set('port', appSettings.port);
