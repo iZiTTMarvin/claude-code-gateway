@@ -6,9 +6,32 @@ files:
   - dist/**/*
   - dist-electron/**/*
   - "!node_modules"
+asar: true
+
 win:
-  target: nsis
+  target:
+    - target: nsis
+      arch:
+        - x64
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
-asar: true
+  createDesktopShortcut: true
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  notarize: false
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+  category: Development
