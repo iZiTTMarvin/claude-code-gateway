@@ -130,3 +130,56 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: Token 用量统计：集成修复 + Bug 修复
+
+**Date**: 2026-04-08
+**Task**: Token 用量统计：集成修复 + Bug 修复
+
+### Summary
+
+(Add summary)
+
+### Main Changes
+
+## 本session修复的问题
+
+| 问题 | 根因 | 修复 |
+|------|------|------|
+| Usage DB init failed: __filename is not defined | better-sqlite3 未加入 vite external，rollup bundle native 模块导致 ESM 兼容性崩溃 | vite.config.ts external 加入 better-sqlite3 |
+| react-is 构建错误 | recharts 依赖 react-is 但未安装 | npm install react-is |
+| 统计页面显示假数据 | W2 worktree 使用 mock 数据，合并后未切换为真实 IPC | ipc.ts 全部切换为真实 IPC 调用，删除 mock-usage-data.ts |
+| Token 用量未被记录 | Anthropic SSE 协议中 input_tokens 在 message_start 而非 message_delta | 从 message_start 提取 input_tokens，message_delta 提取 output_tokens |
+| better-sqlite3 NODE_MODULE_VERSION 不匹配 | npm install 针对 Node.js v24 编译，Electron 33 需要不同 ABI | electron-rebuild 重新编译 |
+| deletePricing 签名不一致 | ipc.ts 传 string，preload/types 期望传对象 | 对齐签名 |
+
+## 知识沉淀
+
+- 更新 cross-layer-thinking-guide.md：Mistake 4（native 模块 external）、Mistake 5（mock 清理）
+- 保存 feedback memory：禁止使用 mock 数据
+
+## 已归档任务
+
+- 04-07-provider-token-stats（父任务）
+- 04-08-backend-usage-storage（后端子任务）
+- 04-08-frontend-stats-page（前端子任务）
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0af3750` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

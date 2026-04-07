@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 3
-- **Last Active**: 2026-04-07
+- **Total Sessions**: 4
+- **Last Active**: 2026-04-08
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~132 | Active |
+| `journal-1.md` | ~185 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits |
 |---|------|-------|---------|
+| 4 | 2026-04-08 | Token 用量统计：集成修复 + Bug 修复 | `0af3750` |
 | 3 | 2026-04-07 | 优化添加服务商交互为居中 Modal | `d324eaf` |
 | 2 | 2026-04-07 | Bootstrap Guidelines Phase Complete | `f02f951` |
 | 1 | 2026-04-07 | Claude Code 本地网关重构与收尾 | `36bda24`, `408ae66` |
