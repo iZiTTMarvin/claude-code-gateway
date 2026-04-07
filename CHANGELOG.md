@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2026-04-08
+- **feat(ui)**: 新增侧边栏导航 + 统计页面 + Recharts 图表
+  - `App.tsx` 布局增加左侧 56px 窄侧边栏，支持配置/统计页面切换
+  - 新增 `StatsPage` 页面，包含汇总概览卡片、Token 趋势折线图、厂商对比柱状图、分页明细表格、模型定价 CRUD、数据清理功能
+  - 新增 `useUsage` hook，封装所有 usage 相关 IPC 调用
+  - 新增 `src/lib/ipc.ts` 中 usage 相关 IPC 函数（当前使用 mock 数据）
+  - 安装 `recharts` 依赖
+  - 任务详情见 `.trellis/tasks/04-08-frontend-stats-page/prd.md`
+
 ## 2026-04-07
 - **ui**：UI 布局重构为左右双栏，新增一键复制功能
   - `App.tsx` 主区域从垂直单栏改为左栏（服务商+模型发现）+ 右栏（槽位映射+状态+鉴权）双栏布局
