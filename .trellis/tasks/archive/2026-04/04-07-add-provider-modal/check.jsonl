@@ -1,0 +1,4 @@
+{"file": ".kilocode/workflows/finish-work.md", "reason": "Finish work checklist"}
+{"file": ".kilocode/workflows/check-frontend.md", "reason": "Frontend check spec"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "检查：命名导出、IPC边界、禁止default export"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "检查：类型安全、禁止any"}

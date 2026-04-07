@@ -1,0 +1,4 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "组件设计规范：组件结构、Form规则、IPC边界"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "目录结构：ui基础组件放在components/ui/"}
