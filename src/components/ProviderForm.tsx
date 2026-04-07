@@ -42,15 +42,8 @@ export function ProviderForm({ initial, onSubmit, onCancel }: ProviderFormProps)
       : 'Base URL (如 https://api.openai.com 或 https://api.openai.com/v1)';
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-4"
-    >
-      <div className="text-sm font-medium text-blue-800">
-        {isEdit ? '编辑服务商' : '添加服务商'}
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 gap-3">
         <input
           type="text"
           value={name}
@@ -75,7 +68,7 @@ export function ProviderForm({ initial, onSubmit, onCancel }: ProviderFormProps)
           className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
           required
         />
-        <div className="sm:col-span-4 text-xs text-zinc-500">
+        <div className="text-xs text-zinc-500">
           {protocol === 'anthropic'
             ? '支持填写根地址或已带 /v1 的地址，程序会自动尝试兼容的消息端点。'
             : '当前产品主路径面向 Anthropic-compatible；OpenAI Compatible 仅保留兼容能力。'}
