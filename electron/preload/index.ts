@@ -4,7 +4,17 @@
  */
 
 import { contextBridge, ipcRenderer } from 'electron';
-import type { AppConfig, DiscoveredModel, ProxyStatus, IPCResult } from '../../shared/types';
+import type {
+  AppConfig,
+  DiscoveredModel,
+  DailyUsageSummary,
+  IPCResult,
+  ModelPricing,
+  ProxyStatus,
+  UsageQueryParams,
+  UsageQueryResult,
+  UsageSummary,
+} from '../../shared/types';
 
 interface ProviderModelDiscoveryResult {
   providerId: string;
@@ -75,6 +85,50 @@ const electronAPI = {
     return () => {
       ipcRenderer.removeListener('proxy:status-change', handler);
     };
+  },
+
+  // ===== 用量统计 =====
+
+  async getUsageSummary(params?: { startDate?: string; endDate?: string }): Promise<UsageSummary> {
+    const result: IPCResult<UsageSummary> = await ipcRenderer.invoke('usage:get-summary', params);
+    return unwrap(result);
+  },
+
+  async getUsageRecords(params: UsageQueryParams): Promise<UsageQueryResult> {
+    const result: IPCResult<UsageQueryResult> = await ipcRenderer.invoke('usage:get-records', params);
+    return unwrap(result);
+  },
+
+  async getDailyTrend(params?: { startDate?: string; endDate?: string }): Promise<DailyUsageSummary[]> {
+    const result: IPCResult<DailyUsageSummary[]> = await ipcRenderer.invoke('usage:get-daily-trend', params);
+    return unwrap(result);
+  },
+
+  async deleteUsageBefore(date: string): Promise<void> {
+    const result: IPCResult<undefined> = await ipcRenderer.invoke('usage:delete-before', { date });
+    unwrap(result);
+  },
+
+  async clearAllUsage(): Promise<void> {
+    const result: IPCResult<undefined> = await ipcRenderer.invoke('usage:clear-all');
+    unwrap(result);
+  },
+
+  // ===== 模型定价 =====
+
+  async getAllPricing(): Promise<ModelPricing[]> {
+    const result: IPCResult<ModelPricing[]> = await ipcRenderer.invoke('pricing:get-all');
+    return unwrap(result);
+  },
+
+  async upsertPricing(pricing: ModelPricing): Promise<ModelPricing> {
+    const result: IPCResult<ModelPricing> = await ipcRenderer.invoke('pricing:upsert', pricing);
+    return unwrap(result);
+  },
+
+  async deletePricing(modelId: string): Promise<void> {
+    const result: IPCResult<undefined> = await ipcRenderer.invoke('pricing:delete', { modelId });
+    unwrap(result);
   },
 };
 

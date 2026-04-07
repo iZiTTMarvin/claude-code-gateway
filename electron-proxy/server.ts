@@ -3,7 +3,7 @@
  */
 
 import type { Request, Response } from 'express';
-import type { AppConfig } from '../shared/types';
+import type { AppConfig, ProviderProtocol } from '../shared/types';
 import type {
   AnthropicMessagesRequest,
   ChatCompletionRequest,
@@ -33,6 +33,38 @@ interface ListedModel {
   readonly source: 'discovery' | 'slot-mapping' | 'legacy-route';
 }
 
+/** usage 采集回调的类型签名 */
+export interface UsageRecordInput {
+  readonly providerId: string;
+  readonly providerName: string;
+  readonly modelId: string;
+  readonly inputTokens: number;
+  readonly outputTokens: number;
+  readonly protocol: ProviderProtocol;
+}
+
+/** usage 采集回调（由主进程注入） */
+export type UsageCollector = (record: UsageRecordInput) => void;
+
+/** 当前注入的 usage 采集回调 */
+let usageCollector: UsageCollector | null = null;
+
+/** 注入 usage 采集回调（主进程在启动时调用） */
+export function setUsageCollector(collector: UsageCollector): void {
+  usageCollector = collector;
+}
+
+/** 采集 usage（在流结束后调用，不阻塞响应转发） */
+function collectUsage(record: UsageRecordInput): void {
+  if (!usageCollector) return;
+  try {
+    usageCollector(record);
+  } catch (error) {
+    // usage 采集失败不影响请求响应
+    logger.error(`Usage collection failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 function getHttpStatusCode(error: unknown): number {
   if (error instanceof AuthenticationError) return 401;
   if (error instanceof ModelNotFoundError) return 404;
@@ -41,26 +73,191 @@ function getHttpStatusCode(error: unknown): number {
   return 500;
 }
 
+/**
+ * 逐行解析 SSE 流，在转发的同时提取 usage 信息
+ *
+ * Anthropic 协议：从 message_delta 事件中提取 usage
+ * OpenAI 协议：从最后一个 chunk 中提取 usage，以 data: [DONE] 标记结束
+ */
 function writeStreamResponse(
   res: Response,
   body: NodeJS.ReadableStream,
-  contentType: string
+  contentType: string,
+  usageContext: UsageRecordInput
 ): void {
   res.setHeader('Content-Type', contentType);
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
 
-  body.pipe(res);
+  const { protocol } = usageContext;
 
-  body.on('error', (err: Error) => {
-    logger.error(`Stream error: ${err.message}`);
-    res.end();
-  });
+  // 累积 usage（流式响应中 usage 可能在中间和最终事件中分批给出）
+  let accInputTokens = 0;
+  let accOutputTokens = 0;
 
-  body.on('end', () => {
-    logger.response(200, true);
-  });
+  if (protocol === 'anthropic') {
+    // Anthropic SSE 协议：逐行解析 event / data 对
+    let currentEvent = '';
+    let buffer = '';
+
+    const readable = body as NodeJS.ReadableStream & { on(event: string, fn: (...args: unknown[]) => void): unknown };
+
+    readable.on('data', (chunk: unknown) => {
+      const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk as Uint8Array).toString('utf-8');
+      buffer += text;
+
+      // 按双换行分割 SSE 事件块
+      const parts = buffer.split('\n\n');
+      // 保留最后一段（可能不完整）
+      buffer = parts.pop() ?? '';
+
+      for (const part of parts) {
+        // 转发原始数据
+        res.write(part + '\n\n');
+
+        // 解析 event / data 行
+        for (const line of part.split('\n')) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('event:')) {
+            currentEvent = trimmed.slice(6).trim();
+          } else if (trimmed.startsWith('data:')) {
+            const dataStr = trimmed.slice(5).trim();
+            if (!dataStr) continue;
+
+            try {
+              const data = JSON.parse(dataStr);
+
+              if (currentEvent === 'message_delta' && data.usage) {
+                accInputTokens += data.usage.input_tokens ?? 0;
+                accOutputTokens += data.usage.output_tokens ?? 0;
+              }
+            } catch {
+              // JSON 解析失败时忽略（可能是非 JSON 的 data 行）
+            }
+          }
+        }
+      }
+    });
+
+    readable.on('end', () => {
+      // 写入剩余 buffer
+      if (buffer.trim()) {
+        res.write(buffer);
+      }
+      res.end();
+
+      // 流结束时采集 usage（无论是否已通过 message_stop 标记）
+      if (accInputTokens > 0 || accOutputTokens > 0) {
+        collectUsage({
+          ...usageContext,
+          inputTokens: accInputTokens,
+          outputTokens: accOutputTokens,
+        });
+      }
+
+      logger.response(200, true);
+    });
+
+    readable.on('error', (err: Error) => {
+      logger.error(`Stream error: ${err.message}`);
+      res.end();
+    });
+  } else {
+    // OpenAI SSE 协议：data: { ... } 行，最终以 data: [DONE] 结束
+    let buffer = '';
+
+    const readable = body as NodeJS.ReadableStream & { on(event: string, fn: (...args: unknown[]) => void): unknown };
+
+    readable.on('data', (chunk: unknown) => {
+      const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk as Uint8Array).toString('utf-8');
+      buffer += text;
+
+      const parts = buffer.split('\n');
+      buffer = parts.pop() ?? '';
+
+      for (const line of parts) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith(':')) continue;
+
+        // 转发
+        res.write(line + '\n');
+
+        if (trimmed.startsWith('data: ')) {
+          const dataStr = trimmed.slice(6).trim();
+          if (dataStr === '[DONE]') {
+            res.write('\n');
+            continue;
+          }
+
+          try {
+            const data = JSON.parse(dataStr);
+            if (data.usage) {
+              accInputTokens = data.usage.prompt_tokens ?? 0;
+              accOutputTokens = data.usage.completion_tokens ?? 0;
+            }
+          } catch {
+            // 忽略 JSON 解析失败
+          }
+        }
+      }
+    });
+
+    readable.on('end', () => {
+      if (buffer.trim()) {
+        res.write(buffer);
+      }
+      res.end();
+
+      if (accInputTokens > 0 || accOutputTokens > 0) {
+        collectUsage({
+          ...usageContext,
+          inputTokens: accInputTokens,
+          outputTokens: accOutputTokens,
+        });
+      }
+
+      logger.response(200, true);
+    });
+
+    readable.on('error', (err: Error) => {
+      logger.error(`Stream error: ${err.message}`);
+      res.end();
+    });
+  }
+}
+
+/** 从非流式响应中提取 usage 并采集 */
+function extractAndCollectNonStreamUsage(
+  data: unknown,
+  usageContext: UsageRecordInput
+): void {
+  let inputTokens = 0;
+  let outputTokens = 0;
+
+  if (usageContext.protocol === 'anthropic') {
+    // Anthropic 非流式：{ usage: { input_tokens, output_tokens } }
+    const resp = data as { usage?: { input_tokens?: number; output_tokens?: number } };
+    if (resp.usage) {
+      inputTokens = resp.usage.input_tokens ?? 0;
+      outputTokens = resp.usage.output_tokens ?? 0;
+    }
+  } else {
+    // OpenAI 非流式：{ usage: { prompt_tokens, completion_tokens } }
+    const resp = data as { usage?: { prompt_tokens?: number; completion_tokens?: number } };
+    if (resp.usage) {
+      inputTokens = resp.usage.prompt_tokens ?? 0;
+      outputTokens = resp.usage.completion_tokens ?? 0;
+    }
+  }
+
+  if (inputTokens > 0 || outputTokens > 0) {
+    collectUsage({
+      ...usageContext,
+      inputTokens,
+      outputTokens,
+    });
+  }
 }
 
 async function forwardRequest(
@@ -91,6 +288,20 @@ async function forwardRequest(
       );
     }
 
+    // 查找 provider 显示名
+    const providerConfig = config.providers.find(p => p.id === provider.id);
+    const providerName = providerConfig?.name ?? provider.id;
+
+    // 构建 usage 采集上下文
+    const usageContext: UsageRecordInput = {
+      providerId: provider.id,
+      providerName,
+      modelId: actualModel,
+      inputTokens: 0,
+      outputTokens: 0,
+      protocol: providerRequest.protocol,
+    };
+
     const requestBody = { ...providerRequest.body, model: actualModel };
     const result: ProviderResponse = await provider.send({
       protocol: providerRequest.protocol,
@@ -101,10 +312,14 @@ async function forwardRequest(
       writeStreamResponse(
         res,
         result.body,
-        options.protocol === 'anthropic' ? 'text/event-stream' : 'text/event-stream'
+        options.protocol === 'anthropic' ? 'text/event-stream' : 'text/event-stream',
+        usageContext
       );
       return;
     }
+
+    // 非流式：从响应中提取 usage
+    extractAndCollectNonStreamUsage(result.data, usageContext);
 
     res.json(result.data);
     logger.response(200, false);

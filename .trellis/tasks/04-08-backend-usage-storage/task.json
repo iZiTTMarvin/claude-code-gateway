@@ -11,9 +11,9 @@
   "assignee": "xuhaochen",
   "createdAt": "2026-04-08",
   "completedAt": null,
-  "branch": null,
+  "branch": "feature/backend-usage-storage",
   "base_branch": "main",
-  "worktree_path": null,
+  "worktree_path": "D:\\visual_ProgrammingSoftware\\毕设and简历Projects\\trellis-worktrees\\feature\\backend-usage-storage",
   "current_phase": 0,
   "next_action": [
     {

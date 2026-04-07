@@ -14,9 +14,19 @@ import {
   syncAllProvidersDiscovery,
   syncProviderDiscovery,
 } from './provider-discovery';
-import type { AppConfig, IPCResult, ProxyStatus } from '../../shared/types';
+import type { AppConfig, IPCResult, ModelPricing, ProxyStatus, UsageQueryParams } from '../../shared/types';
 import { ProviderNotFoundError } from '../../electron-proxy/utils/errors';
 import { logger } from '../../electron-proxy/utils/logger';
+import {
+  clearAllRecords,
+  deleteRecordsBefore,
+  deletePricing,
+  getAllPricing,
+  getDailyTrend,
+  getUsageSummary,
+  queryUsageRecords,
+  upsertPricing,
+} from './usage-db';
 
 function normalizeDiscoveredModels(providerId: string, models: readonly {
   id: string;
@@ -152,6 +162,82 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
   setStatusChangeCallback((status: ProxyStatus) => {
     if (!mainWindow.isDestroyed()) {
       mainWindow.webContents.send('proxy:status-change', status);
+    }
+  });
+
+  // ===== 用量统计 =====
+
+  ipcMain.handle('usage:get-summary', async (_event, params?: { startDate?: string; endDate?: string }) => {
+    try {
+      const summary = getUsageSummary(params?.startDate, params?.endDate);
+      return ok(summary);
+    } catch (err) {
+      return fail(err instanceof Error ? err.message : '获取用量汇总失败');
+    }
+  });
+
+  ipcMain.handle('usage:get-records', async (_event, params: UsageQueryParams) => {
+    try {
+      const result = queryUsageRecords(params);
+      return ok(result);
+    } catch (err) {
+      return fail(err instanceof Error ? err.message : '查询用量记录失败');
+    }
+  });
+
+  ipcMain.handle('usage:get-daily-trend', async (_event, params?: { startDate?: string; endDate?: string }) => {
+    try {
+      const trend = getDailyTrend(params?.startDate, params?.endDate);
+      return ok(trend);
+    } catch (err) {
+      return fail(err instanceof Error ? err.message : '获取每日趋势失败');
+    }
+  });
+
+  ipcMain.handle('usage:delete-before', async (_event, params: { date: string }) => {
+    try {
+      deleteRecordsBefore(params.date);
+      return ok(undefined);
+    } catch (err) {
+      return fail(err instanceof Error ? err.message : '删除用量记录失败');
+    }
+  });
+
+  ipcMain.handle('usage:clear-all', async () => {
+    try {
+      clearAllRecords();
+      return ok(undefined);
+    } catch (err) {
+      return fail(err instanceof Error ? err.message : '清空用量记录失败');
+    }
+  });
+
+  // ===== 模型定价 =====
+
+  ipcMain.handle('pricing:get-all', async () => {
+    try {
+      const pricing = getAllPricing();
+      return ok(pricing);
+    } catch (err) {
+      return fail(err instanceof Error ? err.message : '获取模型定价失败');
+    }
+  });
+
+  ipcMain.handle('pricing:upsert', async (_event, pricing: ModelPricing) => {
+    try {
+      const result = upsertPricing(pricing);
+      return ok(result);
+    } catch (err) {
+      return fail(err instanceof Error ? err.message : '保存模型定价失败');
+    }
+  });
+
+  ipcMain.handle('pricing:delete', async (_event, params: { modelId: string }) => {
+    try {
+      deletePricing(params.modelId);
+      return ok(undefined);
+    } catch (err) {
+      return fail(err instanceof Error ? err.message : '删除模型定价失败');
     }
   });
 }

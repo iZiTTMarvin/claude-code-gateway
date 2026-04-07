@@ -15,6 +15,8 @@ import {
   markAppQuitting,
   shouldMinimizeToTrayOnClose,
 } from './desktop-runtime';
+import { initUsageDb, insertUsageRecord } from './usage-db';
+import { setUsageCollector } from '../../electron-proxy/server';
 import { logger } from '../../electron-proxy/utils/logger';
 
 /** 全局未捕获错误兜底 */
@@ -88,6 +90,14 @@ function createWindow(): void {
 }
 
 app.whenReady().then(async () => {
+  // 初始化用量数据库
+  try {
+    await initUsageDb();
+    setUsageCollector(insertUsageRecord);
+  } catch (err) {
+    logger.error(`Usage DB init failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   const config = await getConfig();
   applyDesktopSettings(config.appSettings);
 

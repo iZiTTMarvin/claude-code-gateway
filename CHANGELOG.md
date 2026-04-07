@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2026-04-08
+- **feat(usage)**：实现 token 用量数据采集、SQLite 存储和 IPC 查询接口
+  - 新增 `electron/main/usage-db.ts`：better-sqlite3 存储层，包含 usage_records 和 model_pricing 表，支持汇总/分页/趋势查询及费用计算
+  - 改造 `electron-proxy/server.ts`：SSE 流逐行解析提取 usage（Anthropic message_delta + OpenAI 末尾 chunk），非流式从响应 JSON 提取，通过注入回调异步写入
+  - 扩展 `electron/main/ipc-handlers.ts`：注册 usage:get-summary / usage:get-records / usage:get-daily-trend / usage:delete-before / usage:clear-all 及 pricing:get-all / pricing:upsert / pricing:delete 八个 IPC handler
+  - 扩展 `electron/preload/index.ts`：通过 contextBridge 暴露全部用量统计和定价管理 API
+  - 应用启动时自动初始化 SQLite 数据库并注入 usage 采集回调
+  - 任务详情已归档至 `.trellis/tasks/04-08-backend-usage-storage/prd.md`
+
 ## 2026-04-07
 - **ui**：UI 布局重构为左右双栏，新增一键复制功能
   - `App.tsx` 主区域从垂直单栏改为左栏（服务商+模型发现）+ 右栏（槽位映射+状态+鉴权）双栏布局
