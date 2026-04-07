@@ -9,7 +9,10 @@ import { GatewayStatusCard } from './components/GatewayStatusCard';
 import { GatewayAuthCard } from './components/GatewayAuthCard';
 import { ModelDiscoveryCard } from './components/ModelDiscoveryCard';
 import { ProviderCard } from './components/ProviderCard';
+import { Sidebar } from './components/Sidebar';
+import type { Page } from './components/Sidebar';
 import { StatusBar } from './components/StatusBar';
+import { StatsPage } from './pages/StatsPage';
 import { useAppSettings } from './hooks/useAppSettings';
 import { useGatewayAuth } from './hooks/useGatewayAuth';
 import { useProxyStatus } from './hooks/useProxyStatus';
@@ -20,6 +23,7 @@ import * as ipc from './lib/ipc';
 export function App() {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<Page>('config');
   const proxy = useProxyStatus();
 
   useEffect(() => {
@@ -62,43 +66,52 @@ export function App() {
         onStop={proxy.stop}
       />
 
-      {/* 左右双栏主区域 */}
+      {/* 侧边栏 + 主内容 */}
       <div className="flex flex-1 overflow-hidden">
-        {/* 左栏：配置区 */}
-        <div className="flex w-[420px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-zinc-200 p-5">
-          <ProviderCard
-            providers={providerState.providers}
-            editing={providerState.editing}
-            onEdit={providerState.setEditing}
-            onAdd={providerState.addProvider}
-            onUpdate={providerState.updateProvider}
-            onRemove={providerState.removeProvider}
-          />
+        <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
 
-          <ModelDiscoveryCard
-            providers={providerState.providers}
-            discoveryStateByProvider={providerState.discoveryStateByProvider}
-            syncingProviderId={providerState.syncingProviderId}
-            onRetry={providerState.retryProviderModels}
-          />
-        </div>
+        {currentPage === 'config' ? (
+          /* 左右双栏主区域 */
+          <div className="flex flex-1 overflow-hidden">
+            {/* 左栏：配置区 */}
+            <div className="flex w-[420px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-zinc-200 p-5">
+              <ProviderCard
+                providers={providerState.providers}
+                editing={providerState.editing}
+                onEdit={providerState.setEditing}
+                onAdd={providerState.addProvider}
+                onUpdate={providerState.updateProvider}
+                onRemove={providerState.removeProvider}
+              />
 
-        {/* 右栏：运行区 */}
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
-          <GatewayStatusCard
-            status={proxy.status}
-            appSettings={appSettingsState.appSettings}
-            savingSettings={appSettingsState.saving}
-            onSaveAppSettings={appSettingsState.saveAppSettings}
-          />
+              <ModelDiscoveryCard
+                providers={providerState.providers}
+                discoveryStateByProvider={providerState.discoveryStateByProvider}
+                syncingProviderId={providerState.syncingProviderId}
+                onRetry={providerState.retryProviderModels}
+              />
+            </div>
 
-          <GatewayAuthCard
-            auth={gatewayAuthState.gatewayAuth}
-            generating={gatewayAuthState.generating}
-            onSave={gatewayAuthState.saveGatewayAuth}
-            onGenerate={gatewayAuthState.generateApiKey}
-          />
-        </div>
+            {/* 右栏：运行区 */}
+            <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
+              <GatewayStatusCard
+                status={proxy.status}
+                appSettings={appSettingsState.appSettings}
+                savingSettings={appSettingsState.saving}
+                onSaveAppSettings={appSettingsState.saveAppSettings}
+              />
+
+              <GatewayAuthCard
+                auth={gatewayAuthState.gatewayAuth}
+                generating={gatewayAuthState.generating}
+                onSave={gatewayAuthState.saveGatewayAuth}
+                onGenerate={gatewayAuthState.generateApiKey}
+              />
+            </div>
+          </div>
+        ) : (
+          <StatsPage />
+        )}
       </div>
 
       <StatusBar status={proxy.status} providerCount={config.providers.length} />
