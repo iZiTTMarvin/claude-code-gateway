@@ -96,3 +96,83 @@ export interface ProxyStatus {
 
 /** IPC 通信结果包装 */
 export type IPCResult<T> = { ok: true; data: T } | { ok: false; error: string };
+
+// ============================================================
+// Token 用量统计相关类型（W1 后端定义，W2 前端消费）
+// ============================================================
+
+/** 单次请求的 token 用量记录 */
+export interface UsageRecord {
+  readonly id: number;
+  readonly timestamp: string;
+  readonly providerId: string;
+  readonly providerName: string;
+  readonly modelId: string;
+  readonly inputTokens: number;
+  readonly outputTokens: number;
+  readonly protocol: ProviderProtocol;
+}
+
+/** 用量汇总概览 */
+export interface UsageSummary {
+  readonly totalRequests: number;
+  readonly totalInputTokens: number;
+  readonly totalOutputTokens: number;
+  readonly totalCost: number;
+  readonly providerBreakdown: readonly ProviderUsageSummary[];
+  readonly modelBreakdown: readonly ModelUsageSummary[];
+}
+
+/** 按厂商维度汇总 */
+export interface ProviderUsageSummary {
+  readonly providerId: string;
+  readonly providerName: string;
+  readonly totalRequests: number;
+  readonly totalInputTokens: number;
+  readonly totalOutputTokens: number;
+  readonly totalCost: number;
+}
+
+/** 按模型维度汇总 */
+export interface ModelUsageSummary {
+  readonly modelId: string;
+  readonly providerId: string;
+  readonly providerName: string;
+  readonly totalRequests: number;
+  readonly totalInputTokens: number;
+  readonly totalOutputTokens: number;
+  readonly totalCost: number;
+}
+
+/** 按天汇总（趋势图表用） */
+export interface DailyUsageSummary {
+  readonly date: string;
+  readonly totalInputTokens: number;
+  readonly totalOutputTokens: number;
+  readonly totalCost: number;
+}
+
+/** 模型定价配置 */
+export interface ModelPricing {
+  readonly modelId: string;
+  readonly inputPricePerMillion: number;
+  readonly outputPricePerMillion: number;
+}
+
+/** 用量记录查询参数 */
+export interface UsageQueryParams {
+  readonly providerId?: string;
+  readonly modelId?: string;
+  readonly startDate?: string;
+  readonly endDate?: string;
+  readonly page?: number;
+  readonly pageSize?: number;
+}
+
+/** 用量记录查询结果（分页） */
+export interface UsageQueryResult {
+  readonly records: readonly UsageRecord[];
+  readonly total: number;
+  readonly page: number;
+  readonly pageSize: number;
+}
