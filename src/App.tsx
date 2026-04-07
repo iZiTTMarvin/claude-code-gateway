@@ -70,46 +70,53 @@ export function App() {
         onStop={proxy.stop}
       />
 
-      <main className="flex-1 overflow-y-auto p-6 space-y-6">
-        <ProviderCard
-          providers={providerState.providers}
-          editing={providerState.editing}
-          onEdit={providerState.setEditing}
-          onAdd={providerState.addProvider}
-          onUpdate={providerState.updateProvider}
-          onRemove={providerState.removeProvider}
-        />
+      {/* 左右双栏主区域 */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* 左栏：配置区 */}
+        <div className="flex w-[420px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-zinc-200 p-5">
+          <ProviderCard
+            providers={providerState.providers}
+            editing={providerState.editing}
+            onEdit={providerState.setEditing}
+            onAdd={providerState.addProvider}
+            onUpdate={providerState.updateProvider}
+            onRemove={providerState.removeProvider}
+          />
 
-        <ModelDiscoveryCard
-          providers={providerState.providers}
-          discoveryStateByProvider={providerState.discoveryStateByProvider}
-          syncingProviderId={providerState.syncingProviderId}
-          onRetry={providerState.retryProviderModels}
-        />
+          <ModelDiscoveryCard
+            providers={providerState.providers}
+            discoveryStateByProvider={providerState.discoveryStateByProvider}
+            syncingProviderId={providerState.syncingProviderId}
+            onRetry={providerState.retryProviderModels}
+          />
+        </div>
 
-        <SlotMappingCard
-          providers={providerState.providers}
-          slotMappings={slotState.slotMappings}
-          discoveredModelsByProvider={discoveredModelsByProvider}
-          savingSlot={slotState.savingSlot}
-          onSaveSlot={slotState.saveSlotMapping}
-          onClearSlot={slotState.clearSlotMapping}
-        />
+        {/* 右栏：运行区 */}
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
+          <SlotMappingCard
+            providers={providerState.providers}
+            slotMappings={slotState.slotMappings}
+            discoveredModelsByProvider={discoveredModelsByProvider}
+            savingSlot={slotState.savingSlot}
+            onSaveSlot={slotState.saveSlotMapping}
+            onClearSlot={slotState.clearSlotMapping}
+          />
 
-        <GatewayStatusCard
-          status={proxy.status}
-          appSettings={appSettingsState.appSettings}
-          savingSettings={appSettingsState.saving}
-          onSaveAppSettings={appSettingsState.saveAppSettings}
-        />
+          <GatewayStatusCard
+            status={proxy.status}
+            appSettings={appSettingsState.appSettings}
+            savingSettings={appSettingsState.saving}
+            onSaveAppSettings={appSettingsState.saveAppSettings}
+          />
 
-        <GatewayAuthCard
-          auth={gatewayAuthState.gatewayAuth}
-          generating={gatewayAuthState.generating}
-          onSave={gatewayAuthState.saveGatewayAuth}
-          onGenerate={gatewayAuthState.generateApiKey}
-        />
-      </main>
+          <GatewayAuthCard
+            auth={gatewayAuthState.gatewayAuth}
+            generating={gatewayAuthState.generating}
+            onSave={gatewayAuthState.saveGatewayAuth}
+            onGenerate={gatewayAuthState.generateApiKey}
+          />
+        </div>
+      </div>
 
       <StatusBar
         status={proxy.status}

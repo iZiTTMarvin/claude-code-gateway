@@ -1,7 +1,9 @@
 /**
  * 模型发现状态卡片
+ * - 模型 tag 可点击复制模型 ID
  */
 
+import { useState } from 'react';
 import type { Provider } from '../../shared/types';
 import type { ProviderDiscoveryState } from '../hooks/useProviders';
 
@@ -13,11 +15,8 @@ interface ModelDiscoveryCardProps {
 }
 
 function formatSyncTime(timestamp?: number): string {
-  if (!timestamp) {
-    return '尚未同步';
-  }
-  const date = new Date(timestamp);
-  return date.toLocaleString();
+  if (!timestamp) return '尚未同步';
+  return new Date(timestamp).toLocaleString();
 }
 
 function getStatusText(status: ProviderDiscoveryState['status']): string {
@@ -34,6 +33,32 @@ function getStatusClassName(status: ProviderDiscoveryState['status']): string {
   return 'bg-zinc-100 text-zinc-600';
 }
 
+/** 可点击复制的模型 ID 标签 */
+function ModelTag({ modelId, displayName }: { modelId: string; displayName: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(modelId);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1200);
+  };
+
+  return (
+    <button
+      type="button"
+      title={`点击复制: ${modelId}`}
+      onClick={() => void handleCopy()}
+      className={`rounded px-2 py-0.5 text-xs ring-1 transition-colors ${
+        copied
+          ? 'bg-emerald-50 text-emerald-700 ring-emerald-300'
+          : 'bg-white text-zinc-700 ring-zinc-200 hover:bg-indigo-50 hover:text-indigo-700 hover:ring-indigo-300'
+      }`}
+    >
+      {copied ? `✓ ${displayName}` : displayName}
+    </button>
+  );
+}
+
 export function ModelDiscoveryCard({
   providers,
   discoveryStateByProvider,
@@ -45,7 +70,7 @@ export function ModelDiscoveryCard({
       <div className="border-b border-indigo-100 px-4 py-3">
         <h2 className="text-base font-semibold text-zinc-800">模型发现</h2>
         <p className="mt-1 text-sm text-zinc-500">
-          保存服务商后自动同步模型。失败时可重试，也可在槽位映射里直接手填模型 ID。
+          保存服务商后自动同步模型。点击模型名称可复制模型 ID。
         </p>
       </div>
 
@@ -69,9 +94,7 @@ export function ModelDiscoveryCard({
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-zinc-800">{provider.name}</span>
                     <span
-                      className={`rounded px-2 py-0.5 text-[11px] font-medium ${getStatusClassName(
-                        state.status,
-                      )}`}
+                      className={`rounded px-2 py-0.5 text-[11px] font-medium ${getStatusClassName(state.status)}`}
                     >
                       {getStatusText(state.status)}
                     </span>
@@ -101,12 +124,11 @@ export function ModelDiscoveryCard({
               {state.models.length > 0 ? (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {state.models.map(model => (
-                    <span
+                    <ModelTag
                       key={`${provider.id}-${model.id}`}
-                      className="rounded bg-white px-2 py-0.5 text-xs text-zinc-700 ring-1 ring-zinc-200"
-                    >
-                      {model.displayName}
-                    </span>
+                      modelId={model.id}
+                      displayName={model.displayName}
+                    />
                   ))}
                 </div>
               ) : (

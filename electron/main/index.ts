@@ -43,10 +43,10 @@ const shouldAutoOpenDevTools =
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 900,
-    height: 700,
-    minWidth: 700,
-    minHeight: 500,
+    width: 1200,
+    height: 780,
+    minWidth: 900,
+    minHeight: 600,
     title: 'cc-gateway',
     webPreferences: {
       // preload 脚本必须使用 .cjs，避免在 type:module 下被按 ESM 解析

@@ -1,5 +1,6 @@
 /**
  * Claude Code 槽位映射卡片
+ * - 模型 ID 输入框旁新增一键复制按钮
  */
 
 import { useEffect, useState } from 'react';
@@ -32,6 +33,7 @@ export function SlotMappingCard({
   onClearSlot,
 }: SlotMappingCardProps) {
   const [drafts, setDrafts] = useState<Record<SlotKey, SlotMappingDraft>>(slotMappings);
+  const [copiedSlot, setCopiedSlot] = useState<SlotKey | null>(null);
 
   useEffect(() => {
     setDrafts(slotMappings);
@@ -40,22 +42,22 @@ export function SlotMappingCard({
   const handleProviderChange = (slot: SlotKey, providerId: string) => {
     setDrafts(previous => ({
       ...previous,
-      [slot]: {
-        ...previous[slot],
-        providerId,
-      },
+      [slot]: { ...previous[slot], providerId },
     }));
   };
 
   const handleModelChange = (slot: SlotKey, modelId: string) => {
     setDrafts(previous => ({
       ...previous,
-      [slot]: {
-        ...previous[slot],
-        modelId,
-        source: 'custom',
-      },
+      [slot]: { ...previous[slot], modelId, source: 'custom' },
     }));
+  };
+
+  const handleCopyModelId = async (slot: SlotKey, modelId: string) => {
+    if (!modelId.trim()) return;
+    await navigator.clipboard.writeText(modelId.trim());
+    setCopiedSlot(slot);
+    window.setTimeout(() => setCopiedSlot(null), 1200);
   };
 
   return (
@@ -79,11 +81,13 @@ export function SlotMappingCard({
           const draft = drafts[slot];
           const models = draft.providerId ? discoveredModelsByProvider[draft.providerId] ?? [] : [];
           const dataListId = `slot-models-${slot}`;
+          const canCopy = Boolean(draft.modelId.trim());
 
           return (
             <div key={slot} className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
               <div className="mb-2 text-sm font-semibold text-zinc-700">{SLOT_LABELS[slot]}</div>
-              <div className="grid gap-2 sm:grid-cols-[180px_minmax(0,1fr)_auto_auto]">
+              {/* 服务商选择 */}
+              <div className="grid gap-2 sm:grid-cols-[160px_minmax(0,1fr)]">
                 <select
                   value={draft.providerId}
                   onChange={event => handleProviderChange(slot, event.target.value)}
@@ -97,45 +101,66 @@ export function SlotMappingCard({
                   ))}
                 </select>
 
-                <div>
-                  <input
-                    list={dataListId}
-                    value={draft.modelId}
-                    onChange={event => handleModelChange(slot, event.target.value)}
-                    placeholder="输入模型 ID（可手填）"
-                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                  />
-                  <datalist id={dataListId}>
-                    {models.map(modelId => (
-                      <option key={`${slot}-${modelId}`} value={modelId} />
-                    ))}
-                  </datalist>
+                {/* 模型 ID 输入 + 复制按钮 */}
+                <div className="flex gap-1.5">
+                  <div className="relative flex-1">
+                    <input
+                      list={dataListId}
+                      value={draft.modelId}
+                      onChange={event => handleModelChange(slot, event.target.value)}
+                      placeholder="输入模型 ID（可手填）"
+                      className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                    />
+                    <datalist id={dataListId}>
+                      {models.map(modelId => (
+                        <option key={`${slot}-${modelId}`} value={modelId} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  {/* 复制模型 ID */}
+                  <button
+                    type="button"
+                    title="复制模型 ID"
+                    onClick={() => void handleCopyModelId(slot, draft.modelId)}
+                    disabled={!canCopy}
+                    className={`shrink-0 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-40 ${
+                      copiedSlot === slot
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                    }`}
+                  >
+                    {copiedSlot === slot ? '✓' : '复制'}
+                  </button>
+
+                  {/* 保存 */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onSaveSlot(slot, {
+                        providerId: draft.providerId,
+                        modelId: draft.modelId,
+                        source: models.includes(draft.modelId) ? 'discovered' : 'custom',
+                      })
+                    }
+                    disabled={savingSlot === slot || !draft.providerId || !draft.modelId.trim()}
+                    className="shrink-0 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {savingSlot === slot ? '保存中...' : '保存'}
+                  </button>
+
+                  {/* 清空 */}
+                  <button
+                    type="button"
+                    onClick={() => onClearSlot(slot)}
+                    disabled={savingSlot === slot}
+                    className="shrink-0 rounded-md bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-200 disabled:opacity-60"
+                  >
+                    清空
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    onSaveSlot(slot, {
-                      providerId: draft.providerId,
-                      modelId: draft.modelId,
-                      source: models.includes(draft.modelId) ? 'discovered' : 'custom',
-                    })
-                  }
-                  disabled={savingSlot === slot || !draft.providerId || !draft.modelId.trim()}
-                  className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
-                >
-                  {savingSlot === slot ? '保存中...' : '保存'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onClearSlot(slot)}
-                  disabled={savingSlot === slot}
-                  className="rounded-md bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-200 disabled:opacity-60"
-                >
-                  清空
-                </button>
               </div>
+
               {models.length === 0 && draft.providerId && (
                 <div className="mt-2 text-xs text-zinc-500">
                   该服务商暂无可用模型列表，请直接输入自定义模型 ID。

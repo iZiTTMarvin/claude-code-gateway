@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 
 ## 2026-04-07
+- **ui**：UI 布局重构为左右双栏，新增一键复制功能
+  - `App.tsx` 主区域从垂直单栏改为左栏（服务商+模型发现）+ 右栏（槽位映射+状态+鉴权）双栏布局
+  - `electron/main/index.ts` 默认窗口从 900×700 扩大至 1200×780，minWidth 从 700 调整为 900
+  - `GatewayStatusCard`：监听地址和 API Endpoint 行各增加一键复制按钮，复制后显示"✓ 已复制"反馈
+  - `ModelDiscoveryCard`：模型名称 tag 改为可点击按钮，点击复制对应模型 ID，有颜色反馈
+  - `SlotMappingCard`：每个槽位模型 ID 输入框旁新增"复制"按钮，复制当前输入的模型 ID
+
+## 2026-04-07
 - **docs**：重写 README.md 以适配 Electron v2.0.0 升级
   - 移除所有 emoji，提升文档专业度与 GitHub 兼容性
   - 补充 Claude Code 接入指引、技术架构说明与桌面端特性描述
