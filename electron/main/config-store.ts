@@ -13,6 +13,7 @@ import type {
   ProviderDiscoveryState,
   ProviderProtocol,
   RouteMapping,
+  SlotMapping,
 } from '../../shared/types';
 
 const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -28,6 +29,7 @@ const DEFAULT_GATEWAY_AUTH: GatewayAuthConfig = {
 
 const DEFAULT_CONFIG: AppConfig = {
   providers: [],
+  slotMappings: [],
   appSettings: DEFAULT_APP_SETTINGS,
   gatewayAuth: DEFAULT_GATEWAY_AUTH,
   // 兼容字段：新代码请使用 appSettings.port
@@ -37,6 +39,7 @@ const DEFAULT_CONFIG: AppConfig = {
 
 interface StoreSchema {
   providers: readonly ProviderConfig[];
+  slotMappings: readonly SlotMapping[];
   appSettings: AppSettings;
   gatewayAuth: GatewayAuthConfig;
   // deprecated compatibility fields
@@ -77,6 +80,7 @@ async function initStore(): Promise<void> {
     defaults: {
       // StoreSchema 内部保持 ProviderConfig（discovery 必填）
       providers: [],
+      slotMappings: [],
       appSettings: DEFAULT_CONFIG.appSettings,
       gatewayAuth: DEFAULT_CONFIG.gatewayAuth,
       routes: DEFAULT_CONFIG.routes,
@@ -228,7 +232,7 @@ export async function getConfig(): Promise<AppConfig> {
 
   return {
     providers,
-
+    slotMappings: (currentStore.get('slotMappings') as readonly SlotMapping[]) ?? [],
     appSettings,
     gatewayAuth,
     // 兼容字段

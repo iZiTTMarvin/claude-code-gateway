@@ -73,9 +73,19 @@ export interface RouteMapping {
   readonly actualModel: string;
 }
 
+export type SlotKey = 'main' | 'thinking' | 'opus' | 'sonnet' | 'haiku';
+
+export interface SlotMapping {
+  readonly id: string;
+  readonly slot: SlotKey;
+  readonly providerId: string;
+  readonly source: 'discovered' | 'custom';
+  readonly modelId: string;
+}
+
 export interface AppConfig {
   readonly providers: readonly Provider[];
-
+  readonly slotMappings: readonly SlotMapping[];
   readonly appSettings: AppSettings;
   readonly gatewayAuth: GatewayAuthConfig;
   /**

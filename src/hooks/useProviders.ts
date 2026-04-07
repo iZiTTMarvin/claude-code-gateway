@@ -4,7 +4,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { randomUUID } from '../../shared/utils';
-import type { AppConfig, DiscoveredModel, Provider, RouteMapping } from '../../shared/types';
+import type { AppConfig, DiscoveredModel, Provider } from '../../shared/types';
 import * as ipc from '../lib/ipc';
 
 export type ProviderSyncStatus = 'idle' | 'syncing' | 'success' | 'failed';
@@ -15,10 +15,6 @@ export interface ProviderDiscoveryState {
   readonly error?: string;
   readonly fetchedAt?: number;
 }
-
-type SlotMappingLike = {
-  readonly providerId: string;
-};
 
 type DiscoveryLike = {
   readonly status?: string;
@@ -33,14 +29,6 @@ const DEFAULT_DISCOVERY_STATE: ProviderDiscoveryState = {
   status: 'idle',
   models: [],
 };
-
-function isRouteMappingArray(value: unknown): value is readonly RouteMapping[] {
-  return Array.isArray(value);
-}
-
-function isSlotMappingArray(value: unknown): value is readonly SlotMappingLike[] {
-  return Array.isArray(value);
-}
 
 function extractProviderDiscovery(provider: Provider): ProviderDiscoveryState | null {
   const maybeProvider = provider as Provider & { discovery?: DiscoveryLike };
@@ -75,19 +63,10 @@ function extractProviderDiscovery(provider: Provider): ProviderDiscoveryState | 
 }
 
 function omitProviderReferences(config: AppConfig, providerId: string): Record<string, unknown> {
-  const patch: Record<string, unknown> = {};
-  const maybeConfig = config as AppConfig & {
-    routes?: unknown;
-    slotMappings?: unknown;
+  const patch: Record<string, unknown> = {
+    routes: config.routes.filter(route => route.providerId !== providerId),
+    slotMappings: config.slotMappings.filter(mapping => mapping.providerId !== providerId),
   };
-
-  if (isRouteMappingArray(maybeConfig.routes)) {
-    patch.routes = maybeConfig.routes.filter(route => route.providerId !== providerId);
-  }
-
-  if (isSlotMappingArray(maybeConfig.slotMappings)) {
-    patch.slotMappings = maybeConfig.slotMappings.filter(mapping => mapping.providerId !== providerId);
-  }
 
   return patch;
 }
