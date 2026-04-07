@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 ## 2026-04-07
+- **docs**：重写 README.md 以适配 Electron v2.0.0 升级
+  - 移除所有 emoji，提升文档专业度与 GitHub 兼容性
+  - 补充 Claude Code 接入指引、技术架构说明与桌面端特性描述
+  - 更新快速开始步骤与构建流程
+
+## 2026-04-07
 - **refactor**：将产品核心从通用模型路由重构为 Claude Code 本地网关
   - 引入服务商模型发现、Claude Code 槽位映射、Anthropic-compatible 主路径与 discovery 持久化
   - 新增托盘常驻、开机自启设置与桌面运行时控制
