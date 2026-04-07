@@ -98,3 +98,35 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: 优化添加服务商交互为居中 Modal
+
+**Date**: 2026-04-07
+**Task**: 优化添加服务商交互为居中 Modal
+
+### Summary
+
+新建通用 Modal 组件，改造 ProviderCard 添加/编辑交互从内联表单改为居中悬浮弹窗。包含 Portal 渲染、ESC/遮罩关闭、淡入缩放动画。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d324eaf` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
