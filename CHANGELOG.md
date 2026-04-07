@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 ## 2026-04-08
+- **fix(usage)**: 修复 DB 初始化崩溃 + 前端 mock 数据未切换
+  - `better-sqlite3` 加入 vite `rollupOptions.external`，修复 ESM 下 `__filename is not defined` 崩溃
+  - `src/lib/ipc.ts` 所有 usage/pricing 函数从 mock 数据切换为真实 IPC 调用
+  - 删除 `src/lib/mock-usage-data.ts`，安装 `react-is` 依赖
+- **feat(usage)**: Token 用量统计功能（后端 + 前端集成）
+  - SQLite 存储层（`usage-db.ts`），记录每次请求的 token 用量和模型定价
+  - SSE 流式响应解析改造，从 Anthropic/OpenAI 协议中提取 usage 信息
+  - IPC handlers 支持 usage 查询、汇总、趋势、清理、模型定价 CRUD
+  - 侧边栏导航 + 统计页面（Recharts 图表、汇总卡片、分页表格、定价配置、数据管理）
+  - 修复 review 问题：OpenAI SSE buffer 边界、usage 累加、表格排序、费用列显示、error state、参数校验
+  - 任务详情见 `.trellis/tasks/04-07-provider-token-stats/`
 - **feat(ui)**: 新增侧边栏导航 + 统计页面 + Recharts 图表
   - `App.tsx` 布局增加左侧 56px 窄侧边栏，支持配置/统计页面切换
   - 新增 `StatsPage` 页面，包含汇总概览卡片、Token 趋势折线图、厂商对比柱状图、分页明细表格、模型定价 CRUD、数据清理功能

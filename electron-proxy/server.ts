@@ -82,10 +82,9 @@ function getHttpStatusCode(error: unknown): number {
 function writeStreamResponse(
   res: Response,
   body: NodeJS.ReadableStream,
-  contentType: string,
   usageContext: UsageRecordInput
 ): void {
-  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
@@ -128,8 +127,10 @@ function writeStreamResponse(
             try {
               const data = JSON.parse(dataStr);
 
-              if (currentEvent === 'message_delta' && data.usage) {
-                accInputTokens += data.usage.input_tokens ?? 0;
+              // Anthropic 协议：message_start 包含 input_tokens，message_delta 包含 output_tokens
+              if (currentEvent === 'message_start' && data.message?.usage) {
+                accInputTokens += data.message.usage.input_tokens ?? 0;
+              } else if (currentEvent === 'message_delta' && data.usage) {
                 accOutputTokens += data.usage.output_tokens ?? 0;
               }
             } catch {
@@ -147,7 +148,7 @@ function writeStreamResponse(
       }
       res.end();
 
-      // 流结束时采集 usage（无论是否已通过 message_stop 标记）
+      // 流结束时采集 usage
       if (accInputTokens > 0 || accOutputTokens > 0) {
         collectUsage({
           ...usageContext,
@@ -173,31 +174,32 @@ function writeStreamResponse(
       const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk as Uint8Array).toString('utf-8');
       buffer += text;
 
-      const parts = buffer.split('\n');
+      // 按双换行分割 SSE 事件块（与 Anthropic 分支保持一致）
+      const parts = buffer.split('\n\n');
       buffer = parts.pop() ?? '';
 
-      for (const line of parts) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith(':')) continue;
+      for (const part of parts) {
+        // 转发原始数据
+        res.write(part + '\n\n');
 
-        // 转发
-        res.write(line + '\n');
+        for (const line of part.split('\n')) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith(':')) continue;
 
-        if (trimmed.startsWith('data: ')) {
-          const dataStr = trimmed.slice(6).trim();
-          if (dataStr === '[DONE]') {
-            res.write('\n');
-            continue;
-          }
+          if (trimmed.startsWith('data: ')) {
+            const dataStr = trimmed.slice(6).trim();
+            if (dataStr === '[DONE]') continue;
 
-          try {
-            const data = JSON.parse(dataStr);
-            if (data.usage) {
-              accInputTokens = data.usage.prompt_tokens ?? 0;
-              accOutputTokens = data.usage.completion_tokens ?? 0;
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.usage) {
+                // 使用累加（+=）而非赋值，防御某些 OpenAI 兼容厂商在中间 chunk 也发送 usage
+                accInputTokens += data.usage.prompt_tokens ?? 0;
+                accOutputTokens += data.usage.completion_tokens ?? 0;
+              }
+            } catch {
+              // 忽略 JSON 解析失败
             }
-          } catch {
-            // 忽略 JSON 解析失败
           }
         }
       }
@@ -205,7 +207,7 @@ function writeStreamResponse(
 
     readable.on('end', () => {
       if (buffer.trim()) {
-        res.write(buffer);
+        res.write(buffer + '\n');
       }
       res.end();
 
@@ -312,7 +314,6 @@ async function forwardRequest(
       writeStreamResponse(
         res,
         result.body,
-        options.protocol === 'anthropic' ? 'text/event-stream' : 'text/event-stream',
         usageContext
       );
       return;

@@ -4,7 +4,7 @@
  * 使用 Recharts 绘制柱状图，支持切换指标（Token 数 / 费用）
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -16,6 +16,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { ProviderUsageSummary } from '../../../shared/types';
+import { formatTokenCount, formatCost } from './format';
 
 type MetricKey = 'tokens' | 'cost';
 
@@ -24,26 +25,15 @@ interface ProviderComparisonProps {
   readonly loading: boolean;
 }
 
-function formatTokenCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
-
-function formatCost(n: number): string {
-  return `$${n.toFixed(2)}`;
-}
-
 export function ProviderComparison({ providerBreakdown, loading }: ProviderComparisonProps) {
   const [metric, setMetric] = useState<MetricKey>('tokens');
 
-  // 转换为 Recharts 数据格式
-  const chartData = providerBreakdown.map(p => ({
+  const chartData = useMemo(() => providerBreakdown.map(p => ({
     name: p.providerName,
     inputTokens: p.totalInputTokens,
     outputTokens: p.totalOutputTokens,
     cost: p.totalCost,
-  }));
+  })), [providerBreakdown]);
 
   return (
     <div className="rounded-lg border border-zinc-200 bg-white p-4">

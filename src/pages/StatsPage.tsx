@@ -22,7 +22,7 @@ export function StatsPage() {
     usage.refreshTrend();
     usage.refreshPricing();
     usage.queryRecords({ page: 1, pageSize: 20 });
-  }, []);
+  }, [usage.refreshSummary, usage.refreshTrend, usage.refreshPricing, usage.queryRecords]);
 
   // 从汇总数据中提取厂商列表（id + name）
   const providers = useMemo(() => {
@@ -83,6 +83,7 @@ export function StatsPage() {
         loading={usage.loadingRecords}
         onQuery={usage.queryRecords}
         providers={providers}
+        pricingList={usage.pricingList}
       />
 
       {/* 模型定价配置 */}

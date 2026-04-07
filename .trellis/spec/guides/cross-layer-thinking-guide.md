@@ -68,6 +68,29 @@ For each boundary:
 
 **Good**: Each layer only knows its neighbors
 
+### Mistake 4: Native Module Not Externalized in Build
+
+**Bad**: Adding a native npm package (e.g. `better-sqlite3`) but forgetting to add it to `vite.config.ts` `rollupOptions.external`. Rollup tries to bundle it, but the package internally uses CJS variables (`__filename`, `__dirname`) which don't exist in ESM output, causing runtime crash.
+
+**Good**: Any npm package with native bindings (`.node` files) MUST be added to `external` immediately when installed.
+
+```typescript
+// vite.config.ts
+rollupOptions: {
+  external: ['electron', 'electron-store', 'better-sqlite3'],
+}
+```
+
+**Rule**: When installing a new dependency, check if it has native bindings. If yes, add to `external` in the same commit.
+
+### Mistake 5: Mock Data Not Cleaned After Integration
+
+**Bad**: During parallel development (e.g. multiple worktrees), one worktree uses mock data to develop independently. After merging, the mock calls are never switched to real IPC calls, so the UI shows fake data.
+
+**Good**: After merging parallel branches, verify all mock/stub paths are replaced with real implementations. Add a grep check for "mock" in production code paths.
+
+**Rule**: Multi-worktree integration checklist must include: "All mock/stub imports removed, all IPC calls point to real implementations."
+
 ---
 
 ## Checklist for Cross-Layer Features
@@ -82,6 +105,8 @@ After implementation:
 - [ ] Tested with edge cases (null, empty, invalid)
 - [ ] Verified error handling at each boundary
 - [ ] Checked data survives round-trip
+- [ ] New native dependencies added to vite `external` (if applicable)
+- [ ] All mock/stub code removed, replaced with real implementations (if parallel development)
 
 ---
 

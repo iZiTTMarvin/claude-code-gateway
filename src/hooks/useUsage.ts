@@ -15,15 +15,20 @@ import type {
 import * as ipc from '../lib/ipc';
 
 export function useUsage() {
+  const [error, setError] = useState<string | null>(null);
+
   // --- 汇总概览 ---
   const [summary, setSummary] = useState<UsageSummary | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
 
   const refreshSummary = useCallback(async (startDate?: string, endDate?: string) => {
     setLoadingSummary(true);
+    setError(null);
     try {
       const data = await ipc.getUsageSummary({ startDate, endDate });
       setSummary(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '加载汇总数据失败');
     } finally {
       setLoadingSummary(false);
     }
@@ -40,6 +45,8 @@ export function useUsage() {
       const result = await ipc.getUsageRecords(params);
       setRecords(result.records);
       setTotalRecords(result.total);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '查询用量记录失败');
     } finally {
       setLoadingRecords(false);
     }
@@ -54,6 +61,8 @@ export function useUsage() {
     try {
       const data = await ipc.getDailyTrend({ startDate, endDate });
       setDailyTrend(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '加载趋势数据失败');
     } finally {
       setLoadingTrend(false);
     }
@@ -68,33 +77,54 @@ export function useUsage() {
     try {
       const data = await ipc.getAllPricing();
       setPricingList(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '加载模型定价失败');
     } finally {
       setLoadingPricing(false);
     }
   }, []);
 
   const savePricing = useCallback(async (pricing: ModelPricing) => {
-    await ipc.upsertPricing(pricing);
-    // 刷新列表以反映变更
-    const updated = await ipc.getAllPricing();
-    setPricingList(updated);
+    try {
+      await ipc.upsertPricing(pricing);
+      const updated = await ipc.getAllPricing();
+      setPricingList(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '保存模型定价失败');
+    }
   }, []);
 
   const deletePricing = useCallback(async (modelId: string) => {
-    await ipc.deletePricing(modelId);
-    setPricingList(prev => prev.filter(p => p.modelId !== modelId));
+    try {
+      await ipc.deletePricing({ modelId });
+      setPricingList(prev => prev.filter(p => p.modelId !== modelId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '删除模型定价失败');
+    }
   }, []);
 
   // --- 数据清理 ---
   const deleteBefore = useCallback(async (date: string) => {
-    await ipc.deleteUsageBefore(date);
+    try {
+      await ipc.deleteUsageBefore(date);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '清理数据失败');
+    }
   }, []);
 
   const clearAll = useCallback(async () => {
-    await ipc.clearAllUsage();
+    try {
+      await ipc.clearAllUsage();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '清空数据失败');
+    }
   }, []);
 
+  const clearError = useCallback(() => setError(null), []);
+
   return {
+    error,
+    clearError,
     summary,
     loadingSummary,
     refreshSummary,

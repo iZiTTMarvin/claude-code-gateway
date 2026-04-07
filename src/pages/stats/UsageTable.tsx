@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { UsageRecord, UsageQueryParams } from '../../../shared/types';
+import { formatTimestamp } from './format';
 
 type SortField = 'timestamp' | 'providerName' | 'modelId' | 'inputTokens' | 'outputTokens';
 type SortDir = 'asc' | 'desc';
@@ -16,6 +17,7 @@ interface UsageTableProps {
   readonly loading: boolean;
   readonly onQuery: (params: UsageQueryParams) => void;
   readonly providers: readonly { readonly providerId: string; readonly providerName: string }[];
+  readonly pricingList: readonly { readonly modelId: string; readonly inputPricePerMillion: number; readonly outputPricePerMillion: number }[];
 }
 
 const PAGE_SIZE = 20;
@@ -26,6 +28,7 @@ export function UsageTable({
   loading,
   onQuery,
   providers,
+  pricingList,
 }: UsageTableProps) {
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>('timestamp');
@@ -43,8 +46,10 @@ export function UsageTable({
       providerId: providerFilter || undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
+      sortField,
+      sortDir,
     });
-  }, [page, providerFilter, startDate, endDate, onQuery]);
+  }, [page, providerFilter, startDate, endDate, sortField, sortDir, onQuery]);
 
   useEffect(() => {
     doQuery();
@@ -75,22 +80,12 @@ export function UsageTable({
     }
   };
 
-  const formatTimestamp = (ts: string): string => {
-    try {
-      const d = new Date(ts);
-      return d.toLocaleString('zh-CN', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return ts;
-    }
-  };
-
-  const formatTokens = (n: number): string => {
-    return n.toLocaleString();
+  const computeRowCost = (record: UsageRecord): string => {
+    const pricing = pricingList.find(p => p.modelId === record.modelId);
+    if (!pricing) return '--';
+    const cost = (record.inputTokens / 1_000_000) * pricing.inputPricePerMillion
+               + (record.outputTokens / 1_000_000) * pricing.outputPricePerMillion;
+    return `$${cost.toFixed(4)}`;
   };
 
   const sortIndicator = (field: SortField) => {
@@ -200,13 +195,13 @@ export function UsageTable({
                         {record.modelId}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 text-xs text-zinc-600">
-                        {formatTokens(record.inputTokens)}
+                        {record.inputTokens.toLocaleString()}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 text-xs text-zinc-600">
-                        {formatTokens(record.outputTokens)}
+                        {record.outputTokens.toLocaleString()}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 text-xs text-zinc-600">
-                        --
+                        {computeRowCost(record)}
                       </td>
                     </tr>
                   ))

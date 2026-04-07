@@ -93,69 +93,45 @@ export async function retryProviderModelDiscovery(
 export async function getUsageSummary(
   params?: { startDate?: string; endDate?: string },
 ): Promise<UsageSummary> {
-  // TODO: W1 完成后切换为真实 IPC 调用
-  // const api = await getApi();
-  // return api.getUsageSummary(params);
-  const { mockGetUsageSummary } = await import('./mock-usage-data');
-  return mockGetUsageSummary(params?.startDate, params?.endDate);
+  const api = await getApi();
+  return api.getUsageSummary(params);
 }
 
 export async function getUsageRecords(
   params: UsageQueryParams,
 ): Promise<UsageQueryResult> {
-  // TODO: W1 完成后切换为真实 IPC 调用
-  // const api = await getApi();
-  // return api.getUsageRecords(params);
-  const { mockGetUsageRecords } = await import('./mock-usage-data');
-  return mockGetUsageRecords(params);
+  const api = await getApi();
+  return api.getUsageRecords(params);
 }
 
 export async function getDailyTrend(
   params?: { startDate?: string; endDate?: string },
 ): Promise<DailyUsageSummary[]> {
-  // TODO: W1 完成后切换为真实 IPC 调用
-  // const api = await getApi();
-  // return api.getDailyTrend(params);
-  const { mockGetDailyTrend } = await import('./mock-usage-data');
-  return mockGetDailyTrend(params?.startDate, params?.endDate);
+  const api = await getApi();
+  return api.getDailyTrend(params);
 }
 
 export async function deleteUsageBefore(date: string): Promise<void> {
-  // TODO: W1 完成后切换为真实 IPC 调用
-  // const api = await getApi();
-  // return api.deleteUsageBefore({ date });
-  const { mockDeleteBefore } = await import('./mock-usage-data');
-  return mockDeleteBefore(date);
+  const api = await getApi();
+  return api.deleteUsageBefore({ date });
 }
 
 export async function clearAllUsage(): Promise<void> {
-  // TODO: W1 完成后切换为真实 IPC 调用
-  // const api = await getApi();
-  // return api.clearAllUsage();
-  const { mockClearAll } = await import('./mock-usage-data');
-  return mockClearAll();
+  const api = await getApi();
+  return api.clearAllUsage();
 }
 
 export async function getAllPricing(): Promise<ModelPricing[]> {
-  // TODO: W1 完成后切换为真实 IPC 调用
-  // const api = await getApi();
-  // return api.getAllPricing();
-  const { mockGetAllPricing } = await import('./mock-usage-data');
-  return mockGetAllPricing();
+  const api = await getApi();
+  return api.getAllPricing();
 }
 
 export async function upsertPricing(pricing: ModelPricing): Promise<ModelPricing> {
-  // TODO: W1 完成后切换为真实 IPC 调用
-  // const api = await getApi();
-  // return api.upsertPricing(pricing);
-  const { mockUpsertPricing } = await import('./mock-usage-data');
-  return mockUpsertPricing(pricing);
+  const api = await getApi();
+  return api.upsertPricing(pricing);
 }
 
-export async function deletePricing(modelId: string): Promise<void> {
-  // TODO: W1 完成后切换为真实 IPC 调用
-  // const api = await getApi();
-  // return api.deletePricing({ modelId });
-  const { mockDeletePricing } = await import('./mock-usage-data');
-  return mockDeletePricing(modelId);
+export async function deletePricing(params: { modelId: string }): Promise<void> {
+  const api = await getApi();
+  return api.deletePricing(params);
 }

@@ -176,9 +176,9 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
     }
   });
 
-  ipcMain.handle('usage:get-records', async (_event, params: UsageQueryParams) => {
+  ipcMain.handle('usage:get-records', async (_event, params?: UsageQueryParams) => {
     try {
-      const result = queryUsageRecords(params);
+      const result = queryUsageRecords(params ?? {});
       return ok(result);
     } catch (err) {
       return fail(err instanceof Error ? err.message : '查询用量记录失败');
@@ -194,8 +194,9 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
     }
   });
 
-  ipcMain.handle('usage:delete-before', async (_event, params: { date: string }) => {
+  ipcMain.handle('usage:delete-before', async (_event, params?: { date?: string }) => {
     try {
+      if (!params?.date) return fail('缺少 date 参数');
       deleteRecordsBefore(params.date);
       return ok(undefined);
     } catch (err) {
@@ -232,8 +233,9 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
     }
   });
 
-  ipcMain.handle('pricing:delete', async (_event, params: { modelId: string }) => {
+  ipcMain.handle('pricing:delete', async (_event, params?: { modelId?: string }) => {
     try {
+      if (!params?.modelId) return fail('缺少 modelId 参数');
       deletePricing(params.modelId);
       return ok(undefined);
     } catch (err) {

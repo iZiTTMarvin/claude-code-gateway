@@ -16,6 +16,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { DailyUsageSummary } from '../../../shared/types';
+import { formatTokenCount, formatShortDate } from './format';
 
 type TimeRange = '7d' | '30d' | '90d' | 'all';
 
@@ -36,18 +37,6 @@ function getStartDate(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() - days);
   return d.toISOString().split('T')[0];
-}
-
-function formatShortDate(dateStr: string): string {
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return dateStr;
-  return `${parts[1]}/${parts[2]}`;
-}
-
-function formatTokenCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
 }
 
 export function TrendChart({ dailyTrend, loading, onRangeChange }: TrendChartProps) {

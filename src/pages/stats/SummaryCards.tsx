@@ -5,24 +5,11 @@
  */
 
 import type { UsageSummary } from '../../../shared/types';
+import { formatNumber, formatCost } from './format';
 
 interface SummaryCardsProps {
   readonly summary: UsageSummary | null;
   readonly loading: boolean;
-}
-
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) {
-    return `${(n / 1_000_000).toFixed(2)}M`;
-  }
-  if (n >= 1_000) {
-    return `${(n / 1_000).toFixed(1)}K`;
-  }
-  return n.toLocaleString();
-}
-
-function formatCost(cost: number): string {
-  return `$${cost.toFixed(4)}`;
 }
 
 interface StatCardProps {
@@ -52,7 +39,7 @@ function StatCard({ title, value, loading, icon }: StatCardProps) {
 
 export function SummaryCards({ summary, loading }: SummaryCardsProps) {
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard
         title="总请求数"
         value={summary ? formatNumber(summary.totalRequests) : '0'}

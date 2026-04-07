@@ -167,6 +167,8 @@ export interface UsageQueryParams {
   readonly endDate?: string;
   readonly page?: number;
   readonly pageSize?: number;
+  readonly sortField?: string;
+  readonly sortDir?: 'asc' | 'desc';
 }
 
 /** 用量记录查询结果（分页） */

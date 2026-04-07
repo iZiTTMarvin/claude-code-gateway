@@ -268,12 +268,26 @@ export function queryUsageRecords(params: UsageQueryParams): UsageQueryResult {
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
+  // 排序：仅允许已知列名，防止 SQL 注入
+  const ALLOWED_SORT_COLUMNS: Readonly<Record<string, string>> = {
+    timestamp: 'timestamp',
+    providerName: 'provider_name',
+    modelId: 'model_id',
+    inputTokens: 'input_tokens',
+    outputTokens: 'output_tokens',
+  } as const;
+
+  const sortColumn = params.sortField && ALLOWED_SORT_COLUMNS[params.sortField]
+    ? ALLOWED_SORT_COLUMNS[params.sortField]
+    : 'timestamp';
+  const sortDirection = params.sortDir === 'asc' ? 'ASC' : 'DESC';
+
   const countRow = database.prepare(
     `SELECT COUNT(*) as total FROM usage_records ${whereClause}`
   ).get(...queryParams) as { total: number };
 
   const rows = database.prepare(
-    `SELECT * FROM usage_records ${whereClause} ORDER BY timestamp DESC LIMIT ? OFFSET ?`
+    `SELECT * FROM usage_records ${whereClause} ORDER BY ${sortColumn} ${sortDirection} LIMIT ? OFFSET ?`
   ).all(...queryParams, pageSize, offset) as Array<{
     id: number;
     timestamp: string;
