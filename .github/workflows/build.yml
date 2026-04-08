@@ -1,10 +1,11 @@
-name: Build
+name: Build & Release
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -14,10 +15,13 @@ jobs:
         include:
           - os: windows-latest
             platform: win
+            artifact: win-build
           - os: macos-latest
             platform: mac
+            artifact: mac-build
           - os: ubuntu-latest
             platform: linux
+            artifact: linux-build
 
     runs-on: ${{ matrix.os }}
 
@@ -31,6 +35,12 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Install Linux dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools
+
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
@@ -41,3 +51,42 @@ jobs:
         run: npx electron-builder --${{ matrix.platform }} --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: release/**/*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f | head -50
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v2.0.0-${{ github.run_number }}
+          name: cc-gateway v2.0.0 Build #${{ github.run_number }}
+          body: |
+            cc-gateway 自动构建
+
+            **构建编号**: #${{ github.run_number }}
+            **提交**: ${{ github.sha }}
+          files: |
+            artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
