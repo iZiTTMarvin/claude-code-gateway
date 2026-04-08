@@ -52,11 +52,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # 只上传安装包和更新元数据，排除 unpacked 目录和 Electron 运行时资源
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: release/**/*
+          path: |
+            release/*.exe
+            release/*.blockmap
+            release/*.dmg
+            release/*.AppImage
+            release/*.deb
+            release/latest*.yml
           if-no-files-found: error
 
   release:
@@ -73,8 +80,19 @@ jobs:
         with:
           path: artifacts
 
-      - name: List artifacts
-        run: find artifacts -type f | head -50
+      - name: Move release files to flat directory
+        run: |
+          mkdir -p dist
+          find artifacts -type f \( \
+            -name '*.exe' -o \
+            -name '*.blockmap' -o \
+            -name '*.dmg' -o \
+            -name '*.AppImage' -o \
+            -name '*.deb' -o \
+            -name 'latest*.yml' \
+          \) -exec mv {} dist/ \;
+          echo "Files to release:"
+          ls -lh dist/
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -86,7 +104,6 @@ jobs:
 
             **构建编号**: #${{ github.run_number }}
             **提交**: ${{ github.sha }}
-          files: |
-            artifacts/**/*
+          files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
