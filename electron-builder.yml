@@ -5,8 +5,37 @@ directories:
 files:
   - dist/**/*
   - dist-electron/**/*
-  - "!node_modules"
+  - node_modules/better-sqlite3/**/*
+  - node_modules/better-sqlite3/prebuilds/**/*
+  - node_modules/electron-store/**/*
+  - node_modules/conf/**/*
+  - node_modules/atomically/**/*
+  - node_modules/dot-prop/**/*
+  - node_modules/env-paths/**/*
+  - node_modules/json-schema-typed/**/*
+  - node_modules/pkg-up/**/*
+  - node_modules/find-up-simple/**/*
+  - node_modules/find-up/**/*
+  - node_modules/locate-path/**/*
+  - node_modules/p-locate/**/*
+  - node_modules/p-limit/**/*
+  - node_modules/yocto-queue/**/*
+  - node_modules/path-exists/**/*
+  - node_modules/ajv/**/*
+  - node_modules/ajv-formats/**/*
+  - node_modules/fast-deep-equal/**/*
+  - node_modules/json-schema-traverse/**/*
+  - node_modules/require-from-string/**/*
+  - node_modules/uri-js/**/*
+  - node_modules/semver/**/*
+  - node_modules/debounce-fn/**/*
+  - node_modules/mimic-fn/**/*
+  - node_modules/onetime/**/*
+  - node_modules/type-fest/**/*
+  - node_modules/serialize-javascript/**/*
 asar: true
+asarUnpack:
+  - node_modules/better-sqlite3/**/*
 
 win:
   target:
