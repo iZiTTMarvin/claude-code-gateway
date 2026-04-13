@@ -72,3 +72,7 @@ export ANTHROPIC_BASE_URL=http://localhost:1314
 ## 许可证
 本项目采用 MIT 许可证。详见 LICENSE 文件（如果存在）或 package.json 中的描述。
 
+## 致谢
+
+本开源项目已获得 [LINUX DO](https://linux.do) 开源社区认可与支持。
+
